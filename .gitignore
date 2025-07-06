@@ -1,2 +1,4 @@
 node_modules
 .env
+artifacts/build-info/76125a5edfd47c1ccaa55fc3038257d7.json
+.DS_Store

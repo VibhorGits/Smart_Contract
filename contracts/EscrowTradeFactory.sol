@@ -21,7 +21,7 @@ contract EscrowTradeFactory {
     function createTrade(address _seller, address _arbitrator) external payable returns (address newEscrowAddress) {
         require(msg.value > 0, "Amount must be greater than zero");
 
-        EscrowTrade newEscrow = new EscrowTrade(msg.sender, _seller, msg.value, _arbitrator);
+        EscrowTrade newEscrow = new EscrowTrade{value: msg.value}(msg.sender, _seller, msg.value, _arbitrator);
 
         emit TradeCreated(msg.sender, _seller, msg.value, address(newEscrow), nextTradeId);
         nextTradeId++;

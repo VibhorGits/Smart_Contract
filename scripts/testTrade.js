@@ -7,7 +7,7 @@ async function main() {
   console.log("Interacting with EscrowTradeFactory using account:", deployer.address);
 
   // --- Configuration for the Test Trade ---
-  const FACTORY_ADDRESS = "0xe30F3f2E54BdeAa2B11C68433A6DF5B7Ddeea2d3"; // <--- REPLACE with your ACTUAL deployed factory address
+  const FACTORY_ADDRESS = "0xA0d2e5cB933C56F98cf0614c07886f662C4b4B89"; // <--- REPLACE with your ACTUAL deployed factory address
   const TEST_SELLER_ADDRESS = "0x432ca82afdf6139a32ca3571a3f5ad249de47995"; // <--- REPLACE with a test seller address (any valid Amoy address)
   const TEST_ARBITRATOR_ADDRESS = "0x073EeaDB82B8d7e0E83F1257E75B2930a4ca8e74"; // <--- REPLACE with a test arbitrator address (any valid Amoy address)
   const AMOUNT_TO_ESCROW_ETH = "0.001"; // Amount in ETH (e.g., 0.001 Amoy MATIC)
@@ -28,7 +28,7 @@ async function main() {
       TEST_ARBITRATOR_ADDRESS,
       {
         value: hre.ethers.parseEther(AMOUNT_TO_ESCROW_ETH), // Convert ETH to Wei
-        gasLimit: 500000 // Provide a gas limit for complex transactions if needed
+        gasLimit: 1000000 // Provide a gas limit for complex transactions if needed
       }
     );
 
