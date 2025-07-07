@@ -6,7 +6,7 @@ async function main() {
   // --- Configuration ---
   // !!! IMPORTANT: Replace this with the address of the EscrowTrade contract
   // you want to check.
-  const ESCROW_CONTRACT_ADDRESS = "0x271c17Ba8780899E02605Bb0F94C1471873A89CD"; 
+  const ESCROW_CONTRACT_ADDRESS = "0x6b63c80BDA97b2E696c22bb93F31810f86879c51"; 
 
   console.log(`Checking status for Escrow Contract: ${ESCROW_CONTRACT_ADDRESS}\n`);
 

@@ -6,7 +6,7 @@ async function main() {
   // --- Configuration ---
   // !!! IMPORTANT: Replace this with the address of an EscrowTrade contract
   // that is still in the 'AWAITING_DELIVERY' state.
-  const ESCROW_CONTRACT_ADDRESS = "0x271c17Ba8780899E02605Bb0F94C1471873A89CD"; 
+  const ESCROW_CONTRACT_ADDRESS = "0x6b63c80BDA97b2E696c22bb93F31810f86879c51"; 
 
   // The buyer is the account that created the trade.
   const [buyer] = await hre.ethers.getSigners();

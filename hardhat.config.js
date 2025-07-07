@@ -2,21 +2,23 @@ require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config(); // Ensure dotenv is loaded
 
 // Load environment variables
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
-const ALCHEMY_AMOY_URL = process.env.ALCHEMY_AMOY_URL;
-const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY;
+const {
+  PRIVATE_KEY,
+  PRIVATE_KEY_VOTER_2,
+  PRIVATE_KEY_VOTER_3,
+  ALCHEMY_AMOY_URL,
+  POLYGONSCAN_API_KEY
+} = process.env;
 
-// Optional: Add basic checks for critical environment variables
-if (!PRIVATE_KEY) {
-  console.error("Error: PRIVATE_KEY is not set in .env");
-  process.exit(1);
-}
-if (!ALCHEMY_AMOY_URL) {
-  console.error("Error: ALCHEMY_AMOY_URL is not set in .env");
-  process.exit(1);
-}
-if (!POLYGONSCAN_API_KEY) {
-  console.error("Error: POLYGONSCAN_API_KEY is not set in .env. Verification may fail.");
+// Create a list of accounts, filtering out any that are not set
+const accounts = [
+  PRIVATE_KEY,
+  PRIVATE_KEY_VOTER_2,
+  PRIVATE_KEY_VOTER_3,
+].filter(Boolean); // .filter(Boolean) removes any undefined keys
+
+if (accounts.length < 3) {
+  console.warn("Warning: For full testing, please define PRIVATE_KEY, PRIVATE_KEY_VOTER_2, and PRIVATE_KEY_VOTER_3 in your .env file.");
 }
 
 /** @type import('hardhat/config').HardhatUserConfig */
@@ -25,7 +27,7 @@ module.exports = {
   networks: {
     amoy: {
       url: ALCHEMY_AMOY_URL,
-      accounts: [PRIVATE_KEY],
+      accounts: accounts,
       chainId: 80002, // Chain ID for Polygon Amoy
     },
   },

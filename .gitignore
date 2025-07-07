@@ -2,3 +2,9 @@ node_modules
 .env
 artifacts/build-info/76125a5edfd47c1ccaa55fc3038257d7.json
 .DS_Store
+artifacts/contracts/EscrowTrade.sol/EscrowTrade.dbg.json
+artifacts/contracts/EscrowTrade.sol/EscrowTrade.json
+artifacts/contracts/EscrowTradeFactory.sol/EscrowTradeFactory.dbg.json
+artifacts/contracts/EscrowTradeFactory.sol/EscrowTradeFactory.json
+cache/solidity-files-cache.json
+artifacts/
