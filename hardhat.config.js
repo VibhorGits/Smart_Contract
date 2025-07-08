@@ -7,7 +7,8 @@ const {
   PRIVATE_KEY_VOTER_2,
   PRIVATE_KEY_VOTER_3,
   ALCHEMY_AMOY_URL,
-  POLYGONSCAN_API_KEY
+  POLYGONSCAN_API_KEY,
+  PRIVATE_KEY_SELLER,
 } = process.env;
 
 // Create a list of accounts, filtering out any that are not set
@@ -15,9 +16,10 @@ const accounts = [
   PRIVATE_KEY,
   PRIVATE_KEY_VOTER_2,
   PRIVATE_KEY_VOTER_3,
+  PRIVATE_KEY_SELLER
 ].filter(Boolean); // .filter(Boolean) removes any undefined keys
 
-if (accounts.length < 3) {
+if (accounts.length < 4) {
   console.warn("Warning: For full testing, please define PRIVATE_KEY, PRIVATE_KEY_VOTER_2, and PRIVATE_KEY_VOTER_3 in your .env file.");
 }
 

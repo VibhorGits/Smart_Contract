@@ -4,7 +4,7 @@ const hre = require("hardhat");
 
 async function main() {
   // --- Configuration ---
-  const ESCROW_CONTRACT_ADDRESS = "0x6b63c80BDA97b2E696c22bb93F31810f86879c51";
+  const ESCROW_CONTRACT_ADDRESS = "0x433EF8fbF39f79f0bb71Bfae7873a81937Fe8FFA";
   
   // The Chief Arbitrator's final decision
   // Set to `true` to refund the buyer, `false` to pay the seller.

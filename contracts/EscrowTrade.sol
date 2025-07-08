@@ -4,39 +4,56 @@
 pragma solidity ^0.8.19;
 
 contract EscrowTrade {
-    enum State { AWAITING_DELIVERY, COMPLETE, DISPUTED, AWAITING_PHASE_2 } // Added new state for Phase 2
+
+    // --- NEW: A struct to hold detailed information about the trade ---
+    struct TradeDetails {
+        string item;         // Description of the item being traded
+        uint256 units;       // Number of units
+        uint256 pricePerUnit; // Price for each unit
+    }
+
+    // --- NEW: Added AWAITING_SELLER_CONFIRMATION as the initial state ---
+    enum State { AWAITING_SELLER_CONFIRMATION, AWAITING_DELIVERY, COMPLETE, DISPUTED, AWAITING_PHASE_2 }
 
     address public buyer;
     address public seller;
-    uint256 public amount;
+    uint256 public amount; // This will now be calculated from price * units
     State public currentState;
+    TradeDetails public details;
 
-    // --- PHASE 2: NEW ADDRESS FOR THE CHIEF ARBITRATOR ---
+    // Phase 2
     address public chiefArbitrator;
 
-    // --- Phase 1 VOTING VARIABLES ---
+    // Phase 1
     mapping(address => bool) public isVoter;
     mapping(address => bool) public hasVoted;
     uint256 public voterCount;
-    uint256 public votesForBuyer;  // Count of votes to refund the buyer
-    uint256 public votesForSeller; // Count of votes to release to the seller
+    uint256 public votesForBuyer;
+    uint256 public votesForSeller;
 
-    // The constructor now accepts an array of voter addresses instead of a single arbitrator
-    constructor(address _buyer, address _seller, uint256 _amount, address[] memory _voters, address _chiefArbitrator) payable {
+    // The constructor now takes the TradeDetails struct
+    constructor(
+        address _buyer,
+        address _seller,
+        TradeDetails memory _details,
+        address[] memory _voters,
+        address _chiefArbitrator
+    ) payable {
+        uint256 calculatedAmount = _details.units * _details.pricePerUnit;
+        require(msg.value == calculatedAmount, "Payment must match units * price");
         require(_voters.length > 0, "At least one voter is required");
-        require(_chiefArbitrator != address(0), "Chief arbitrator address cannot be zero");
-        
+        require(_chiefArbitrator != address(0), "Chief arbitrator is required");
+
         buyer = _buyer;
         seller = _seller;
-        amount = _amount;
-        chiefArbitrator = _chiefArbitrator; // Set the Phase 2 arbitrator
-        currentState = State.AWAITING_DELIVERY;
+        amount = msg.value;
+        details = _details;
+        chiefArbitrator = _chiefArbitrator;
+        currentState = State.AWAITING_SELLER_CONFIRMATION; // Start in the new state
 
-        // Register all the addresses from the _voters array as eligible voters
         for (uint i = 0; i < _voters.length; i++) {
-            address voter = _voters[i];
-            if (!isVoter[voter]) {
-                isVoter[voter] = true;
+            if (!isVoter[_voters[i]]) {
+                isVoter[_voters[i]] = true;
                 voterCount++;
             }
         }
@@ -44,18 +61,37 @@ contract EscrowTrade {
 
     receive() external payable {}
 
+    // --- MODIFIERS ---
     modifier onlyBuyer() {
         require(msg.sender == buyer, "Only buyer can call this");
         _;
     }
 
-    // --- PHASE 2: NEW MODIFIER FOR THE CHIEF ARBITRATOR ---
+    modifier onlySeller() {
+        require(msg.sender == seller, "Only seller can call this");
+        _;
+    }
+
     modifier onlyChiefArbitrator() {
         require(msg.sender == chiefArbitrator, "Only the chief arbitrator can call this");
         _;
     }
 
+    // --- EVENTS ---
+    event TradeConfirmedBySeller(address indexed seller);
     event DeliveryConfirmed(address indexed buyer, address indexed seller, uint256 amount);
+    event DisputeRaised(address indexed buyer, address indexed seller, uint256 amount);
+    event Voted(address indexed voter, bool votedForBuyer);
+    event DisputeResolved(address indexed winner, uint256 amount, bool refundedBuyer);
+    event DisputeEscalatedToPhase2(uint256 votesForBuyer, uint256 votesForSeller);
+
+
+    // --- NEW: Seller Confirmation Function ---
+    function confirmTradeDetails() external onlySeller {
+        require(currentState == State.AWAITING_SELLER_CONFIRMATION, "Not awaiting seller confirmation");
+        currentState = State.AWAITING_DELIVERY;
+        emit TradeConfirmedBySeller(seller);
+    }
 
     function confirmDelivery() external onlyBuyer {
         require(currentState == State.AWAITING_DELIVERY, "Not awaiting delivery");
@@ -64,86 +100,82 @@ contract EscrowTrade {
         emit DeliveryConfirmed(buyer, seller, amount);
     }
 
-    event DisputeRaised(address indexed buyer, address indexed seller, uint256 amount);
-
     function raiseDispute() external onlyBuyer {
-        require(currentState == State.AWAITING_DELIVERY, "Not disputable");
+        require(currentState == State.AWAITING_DELIVERY, "Not disputable in this state");
         currentState = State.DISPUTED;
         emit DisputeRaised(buyer, seller, amount);
     }
 
-    // --- NEW VOTING FUNCTION ---
-    event Voted(address indexed voter, bool votedForBuyer);
-
     function castVote(bool _voteForBuyer) external {
-        require(currentState == State.DISPUTED, "No active dispute to vote on");
-        require(isVoter[msg.sender], "You are not an authorized voter for this trade");
+        require(currentState == State.DISPUTED, "No active dispute");
+        require(isVoter[msg.sender], "Not an authorized voter");
         require(!hasVoted[msg.sender], "You have already voted");
 
         hasVoted[msg.sender] = true;
-
         if (_voteForBuyer) {
             votesForBuyer++;
         } else {
             votesForSeller++;
         }
-
         emit Voted(msg.sender, _voteForBuyer);
     }
 
-    // --- REFACTORED DISPUTE RESOLUTION FUNCTION ---
-    event DisputeResolved(address indexed winner, uint256 amount, bool refundedBuyer);
-    event DisputeEscalatedToPhase2(uint256 votesForBuyer, uint256 votesForSeller);
-
     function tallyVotesAndResolve() external {
-        require(currentState == State.DISPUTED, "No active dispute to resolve");
-
+        require(currentState == State.DISPUTED, "No active dispute");
         uint256 totalVotes = votesForBuyer + votesForSeller;
-        require(totalVotes > 0, "No votes have been cast yet");
+        require(totalVotes > 0, "No votes cast");
 
-        uint256 percentForBuyer = (votesForBuyer * 100) / totalVotes;
-        uint256 percentForSeller = (votesForSeller * 100) / totalVotes;
-
-        // Check if the vote margin is too close (within +/- 5%, so a total difference of 10%)
-        uint256 difference = (percentForBuyer > percentForSeller) ? (percentForBuyer - percentForSeller) : (percentForSeller - percentForBuyer);
+        uint256 difference = (votesForBuyer > votesForSeller)
+            ? ((votesForBuyer * 100) / totalVotes) - ((votesForSeller * 100) / totalVotes)
+            : ((votesForSeller * 100) / totalVotes) - ((votesForBuyer * 100) / totalVotes);
         
-        if (difference <= 5) {
-            // Margin is too close, escalate to Phase 2
+        if (difference <= 10) {
             currentState = State.AWAITING_PHASE_2;
             emit DisputeEscalatedToPhase2(votesForBuyer, votesForSeller);
-            // NOTE: In a real implementation, you'd trigger your Phase 2 mechanism here.
         } else {
-            // We have a clear winner
             currentState = State.COMPLETE;
             if (votesForBuyer > votesForSeller) {
-                // Refund the buyer
                 payable(buyer).transfer(amount);
                 emit DisputeResolved(buyer, amount, true);
             } else {
-                // Release funds to the seller
                 payable(seller).transfer(amount);
                 emit DisputeResolved(seller, amount, false);
             }
         }
     }
 
-    // --- PHASE 2: NEW FUNCTION TO RESOLVE THE DISPUTE ---
     function resolvePhase2Dispute(bool _refundBuyer) external onlyChiefArbitrator {
-        require(currentState == State.AWAITING_PHASE_2, "Contract is not awaiting Phase 2 resolution");
+        require(currentState == State.AWAITING_PHASE_2, "Not awaiting Phase 2 resolution");
         currentState = State.COMPLETE;
 
         if (_refundBuyer) {
-            // Refund the buyer
             payable(buyer).transfer(amount);
             emit DisputeResolved(buyer, amount, true);
         } else {
-            // Release funds to the seller
             payable(seller).transfer(amount);
             emit DisputeResolved(seller, amount, false);
         }
     }
 
-    function getTradeDetails() public view returns (address, address, uint256, State, uint256, uint256) {
-        return (buyer, seller, amount, currentState, votesForBuyer, votesForSeller);
+    function getTradeDetails() public view returns (
+        address,
+        address,
+        uint256,
+        State,
+        TradeDetails memory,
+        uint256,
+        uint256,
+        address
+    ) {
+        return (
+            buyer,
+            seller,
+            amount,
+            currentState,
+            details,
+            votesForBuyer,
+            votesForSeller,
+            chiefArbitrator
+        );
     }
 }

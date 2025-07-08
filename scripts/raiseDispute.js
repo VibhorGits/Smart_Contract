@@ -6,7 +6,7 @@ async function main() {
   // --- Configuration ---
   // !!! IMPORTANT: Replace this with the address of an EscrowTrade contract
   // that is still in the 'AWAITING_DELIVERY' state.
-  const ESCROW_CONTRACT_ADDRESS = "0x6b63c80BDA97b2E696c22bb93F31810f86879c51"; 
+  const ESCROW_CONTRACT_ADDRESS = "0x433EF8fbF39f79f0bb71Bfae7873a81937Fe8FFA"; 
 
   // The buyer is the account that created the trade.
   const [buyer] = await hre.ethers.getSigners();
@@ -21,7 +21,7 @@ async function main() {
   try {
     // Check the state before raising the dispute
     let currentState = await escrowContract.currentState();
-    if (Number(currentState) !== 0) { // 0 is AWAITING_DELIVERY
+    if (Number(currentState) !== 1) { // 0 is AWAITING_DELIVERY
         console.error("❌ Error: Contract is not in 'AWAITING_DELIVERY' state. Cannot raise a dispute.");
         return;
     }

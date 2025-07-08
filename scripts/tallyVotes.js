@@ -4,7 +4,7 @@ const hre = require("hardhat");
 
 async function main() {
   // --- Configuration ---
-  const ESCROW_CONTRACT_ADDRESS = "0x6b63c80BDA97b2E696c22bb93F31810f86879c51";
+  const ESCROW_CONTRACT_ADDRESS = "0x433EF8fbF39f79f0bb71Bfae7873a81937Fe8FFA";
 
   const [caller] = await hre.ethers.getSigners();
   
@@ -13,8 +13,8 @@ async function main() {
 
   const EscrowTrade = await hre.ethers.getContractFactory("EscrowTrade");
   const escrowContract = EscrowTrade.attach(ESCROW_CONTRACT_ADDRESS);
-  
-  const states = ["AWAITING_DELIVERY", "COMPLETE", "DISPUTED", "AWAITING_PHASE_2"];
+
+  const states = ["AWAITING_SELLER_CONFIRMATION","AWAITING_DELIVERY", "COMPLETE", "DISPUTED", "AWAITING_PHASE_2"];
 
   try {
     console.log("\nAttempting to call tallyVotesAndResolve()...");

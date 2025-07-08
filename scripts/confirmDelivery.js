@@ -6,7 +6,7 @@ async function main() {
   // --- Configuration ---
   // !!! IMPORTANT: Replace this with the actual address of the EscrowTrade
   // contract that was created by the testTrade.js script.
-  const ESCROW_CONTRACT_ADDRESS = "0x6b63c80BDA97b2E696c22bb93F31810f86879c51"; 
+  const ESCROW_CONTRACT_ADDRESS = "0x433EF8fbF39f79f0bb71Bfae7873a81937Fe8FFA"; 
 
   // The buyer is the account that created the trade.
   // In our case, it's the deployer account from the hardhat config.

@@ -16,16 +16,27 @@ contract EscrowTradeFactory {
 
     uint256 public nextTradeId;
 
+    // We need to reference the struct definition from the other contract
+
     constructor() {
         nextTradeId = 1;
     }
 
-    // The function now accepts an array of voter addresses
-    function createTrade(address _seller, address[] memory _voters, address _chiefArbitrator) external payable returns (address newEscrowAddress) {
-        require(msg.value > 0, "Amount must be greater than zero");
-
-        // We pass the list of voters to the new EscrowTrade's constructor
-        EscrowTrade newEscrow = new EscrowTrade{value: msg.value}(msg.sender, _seller, msg.value, _voters,_chiefArbitrator);
+    // The function now accepts the trade details struct
+    function createTrade(
+        address _seller,
+        EscrowTrade.TradeDetails memory _details,
+        address[] memory _voters,
+        address _chiefArbitrator
+    ) external payable returns (address newEscrowAddress) {
+        
+        EscrowTrade newEscrow = new EscrowTrade{value: msg.value}(
+            msg.sender,
+            _seller,
+            _details,
+            _voters,
+            _chiefArbitrator
+        );
 
         emit TradeCreated(msg.sender, _seller, msg.value, address(newEscrow), nextTradeId);
         nextTradeId++;
